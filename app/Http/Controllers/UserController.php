@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Helpers\JwtAuth;
 use App\User;
 
 class UserController extends Controller
@@ -67,7 +68,29 @@ class UserController extends Controller
     
     public function login(Request $request)
     {
-        echo "login de ingreso";
+        $jwtAuth = new JwtAuth();
+
+        $json = $request->input('json', null);
+        $params = json_decode($json);
+
+        $email = (!is_null($json) && isset($params->email)) ? $params->email : null;
+        $password = (!is_null($json) && isset($params->password)) ? $params->password : null;
+        $getToken = (!is_null($json) && isset($params->gettoken)) ? $params->gettoken : null;
+        //cifrar el pass
+        $pwd = hash('sha256', $password);
+
+        if (!is_null($email) && !is_null($password) && ($getToken == null || $getToken == 'false') ) {
+            $signup = $jwtAuth->signup($email, $pwd);
+        }elseif($getToken != null){
+            $signup = $jwtAuth->signup($email, $pwd, $getToken);
+        }else{
+            $signup = array(
+                    'status' => 'error',
+                    'message' => 'Envia datos de nuevo'
+            );
+        }
+
+        return response()->json($signup, 200);
     }
     /**
      * Display a listing of the resource.
