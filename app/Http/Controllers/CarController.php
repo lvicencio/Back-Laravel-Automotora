@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helpers\JwtAuth;
+use App\Car;
 
 class CarController extends Controller
 {
@@ -46,7 +47,70 @@ class CarController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $hash = $request->header('Authorization', null);
+
+        $jwtAuth = new JwtAuth();
+        $checkToken = $jwtAuth->checkToken($hash);
+
+        if ($checkToken) {
+            //datos por POST
+            $json = $request->input('json', null);
+            $params = json_decode($json);
+            $params_array = json_decode($json, true); //<-- con el valor true, convierte el json en un array
+
+            //usuario logeado
+            $user = $jwtAuth->checkToken($hash, true);
+            //validar
+            //$request->merge($params_array);
+
+            //dd($request);  , "status":"true"
+            
+            $validate = \Validator::make($params_array,[
+                'title' => 'required|min:5',
+                'description' => 'required',
+                'price' => 'required',
+                'status' => 'required'
+            ]);
+
+            if($validate->fails()){
+                return response()->json($validate->errors(),400);
+            }
+              
+                
+                      
+            // $errors = $validate->errors();
+            // if($errors){
+            //     return $errors->toJson();
+            // }
+
+            //almacenar automovil
+           
+            $car = new Car();
+            $car->user_id = $user->sub;
+            $car->title = $params->title;
+            $car->description = $params->description;
+            $car->price = $params->price;
+            $car->status = $params->status;
+
+            $car->save();
+               
+            $data = array(
+                'car'       => $car,
+                'status'    => 'success',
+                'code'      => 200,
+            );
+
+        }else{
+            //error no autorizado
+            $data = array(
+                'message'   => 'Login Incorrecto',
+                'status'    => 'error',
+                'code'      => 400,
+            );
+            
+        }
+
+        return response()->json($data, 200);
     }
 
     /**
