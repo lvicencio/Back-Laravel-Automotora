@@ -15,18 +15,24 @@ class CarController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        $hash = $request->header('Authorization', null);
+        // $hash = $request->header('Authorization', null);
 
-        $jwtAuth = new JwtAuth();
-        $checkToken = $jwtAuth->checkToken($hash);
+        // $jwtAuth = new JwtAuth();
+        // $checkToken = $jwtAuth->checkToken($hash);
 
-        if ($checkToken) {
-            echo "Index de Cars esta AUTENIFCICADO"; die();
-        }else{
-            echo "NO AUTORIZADO";die();
-        }
+        // if ($checkToken) {
+        //     echo "Index de Cars esta AUTENIFCICADO"; die();
+        // }else{
+        //     echo "NO AUTORIZADO";die();
+        // }
+
+        $cars = Car::all()->load('user');
+        return response()->json(array(
+            'cars' => $cars,
+            'status' => 'success'
+            ),200);
     }
 
     /**
@@ -121,7 +127,11 @@ class CarController extends Controller
      */
     public function show($id)
     {
-        //
+        $car = Car::findOrFail($id)->load('user');
+        return response()->json(array(
+            'car' => $car,
+            'status' => 'success'
+            ,200));
     }
 
     /**
@@ -144,7 +154,53 @@ class CarController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $hash = $request->header('Authorization', null);
+
+        $jwtAuth = new JwtAuth();
+        $checkToken = $jwtAuth->checkToken($hash);
+
+        if ($checkToken) {
+            //datos por POST
+            $json = $request->input('json', null);
+            $params = json_decode($json);
+            $params_array = json_decode($json, true); //<-- con el valor true, convierte el json en un array
+
+            //usuario logeado
+            $user = $jwtAuth->checkToken($hash, true);
+                //validar    
+            $validate = \Validator::make($params_array,[
+                'title' => 'required|min:5',
+                'description' => 'required',
+                'price' => 'required',
+                'status' => 'required'
+            ]);
+
+            if($validate->fails()){
+                return response()->json($validate->errors(),400);
+            }
+       
+            //editar automovil
+           
+
+            $car = Car::where('id', $id)->update($params_array);
+                       
+            $data = array(
+                'car'       => $params,
+                'status'    => 'success',
+                'code'      => 200,
+            );
+
+        }else{
+            //error no autorizado
+            $data = array(
+                'message'   => 'Login Incorrecto',
+                'status'    => 'error',
+                'code'      => 400,
+            );
+            
+        }
+
+        return response()->json($data, 200);
     }
 
     /**
@@ -153,8 +209,35 @@ class CarController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
-        //
+        $hash = $request->header('Authorization', null);
+
+        $jwtAuth = new JwtAuth();
+        $checkToken = $jwtAuth->checkToken($hash);
+
+        if ($checkToken) {
+           
+            $car = Car::findOrFail($id);
+
+           $car->delete(); 
+            
+            $data = array(
+                'car'       => $car,
+                'status'    => 'success',
+                'code'      => 200,
+            );
+
+        }else{
+            //error no autorizado
+            $data = array(
+                'message'   => 'Login Incorrecto',
+                'status'    => 'error',
+                'code'      => 400,
+            );
+            
+        }
+
+        return response()->json($data, 200);
     }
 }
