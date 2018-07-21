@@ -1,5 +1,7 @@
 <?php
-
+header("access-control-allow-origin: *");
+header('Access-Control-Allow-Headers: X-CSRF-Token, Access-Control-Request-Headers, Access-Control-Request-Method, Accept, X-Requested-With, Content-Type, X-Auth-Token, Origin, Authorization');
+header('Access-Control-Allow-Methods: PATCH, GET, POST, PUT, DELETE, OPTIONS');
 /*
 |--------------------------------------------------------------------------
 | Web Routes
