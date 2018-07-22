@@ -190,6 +190,12 @@ class CarController extends Controller
                 return response()->json($validate->errors(),400);
             }
        
+           //parametros que no se deben actualizar
+           unset($params_array['id']);
+           unset($params_array['user_id']);
+           unset($params_array['created_at']);
+           unset($params_array['user']);
+
             //editar automovil
            
 
